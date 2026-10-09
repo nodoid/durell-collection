@@ -148,13 +148,18 @@ build_windows() {
   local makemsix="$ROOT/tools/msix/makemsix"
   [ -x "$makemsix" ] || build/windows/build-makemsix.sh
   rm -f "$OUT/$NAME-$VERSION-windows-"*
+  # The Store needs the last part of an MSIX version to be 0, and every upload must be higher than the
+  # last: carry the build number in the third part (1.0.0 build 2 -> 1.0.2.0; 1.0.1 build 1 -> 1.0.1001.0).
+  local major minor patch
+  IFS=. read -r major minor patch <<< "$VERSION"
+  local msix_version="$major.$minor.$((patch * 1000 + BUILD)).0"
   for arch in x64 arm64; do
     local pub="$WORK/windows-$arch"
     rm -rf "$pub"
     dotnet publish src/Durell.Desktop -c Release -r "win-$arch" --self-contained true -o "$pub"
     rm -f "$pub/"*.pdb
     # Package layout: app files + manifest + tiles (unqualified names: no resources.pri needed).
-    sed -e "s/__VERSION__/$VERSION/" -e "s/__ARCH__/$arch/" -e "s/__IDENTITY__/$WINDOWS_IDENTITY/" \
+    sed -e "s/__VERSION__/$msix_version/" -e "s/__ARCH__/$arch/" -e "s/__IDENTITY__/$WINDOWS_IDENTITY/" \
       -e "s/__PUBLISHER__/$WINDOWS_PUBLISHER/" -e "s/__PUBLISHER_NAME__/$WINDOWS_PUBLISHER_NAME/" build/windows/AppxManifest.xml > "$pub/AppxManifest.xml"
     mkdir -p "$pub/Assets"
     for f in build/windows/Assets/*.scale-200.png; do

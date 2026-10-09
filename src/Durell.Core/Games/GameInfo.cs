@@ -38,6 +38,8 @@ internal sealed class Controls
     public List<TouchKey> Touch = new();
     /// <summary>Phones and tablets: the keys a touch on the game picture holds (fire); empty for games with no fire.</summary>
     public OricKey[] TapFire = Array.Empty<OricKey>();
+    /// <summary>When set, the keys a touch on the picture holds depend on the game's state (Scuba Dive: launch, then dive).</summary>
+    public Func<byte[], OricKey[]>? TapKeys;
     /// <summary>What each of the game's keys does in play (the keys the player can redefine).</summary>
     public (string Label, OricKey Key)[] Actions = Array.Empty<(string, OricKey)>();
     /// <summary>The keys, as the original's instructions gave them (shown on the menu and the pause screen).</summary>

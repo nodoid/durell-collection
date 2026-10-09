@@ -467,14 +467,15 @@ internal sealed class PlayScreen : Screen
         if (_keyboard) DrawKeyboard(g, pic);
 
         // a touch on the picture away from every button fires (tilt does the moving)
-        if (c.TapFire.Length > 0)
+        var tapKeys = c.TapKeys?.Invoke(_program.Memory) ?? c.TapFire;
+        if (tapKeys.Length > 0)
             foreach (var tp in inp.Touches)
             {
                 if (!pic.Contains(tp)) continue;
                 bool onButton = false;
                 foreach (var a in _buttonAreas)
                     if (a.Contains(tp)) { onButton = true; break; }
-                if (!onButton) foreach (var k in c.TapFire) _touchKeys.Add(k);
+                if (!onButton) foreach (var k in tapKeys) _touchKeys.Add(k);
             }
     }
 

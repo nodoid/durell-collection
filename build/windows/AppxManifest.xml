@@ -7,7 +7,7 @@
   <!-- __IDENTITY__ / __PUBLISHER__ / __PUBLISHER_NAME__ come from signing/local.properties (Partner Center > Product identity). -->
   <Identity Name="__IDENTITY__"
             Publisher="__PUBLISHER__"
-            Version="__VERSION__.0"
+            Version="__VERSION__"
             ProcessorArchitecture="__ARCH__" />
   <Properties>
     <DisplayName>The Durell Collection</DisplayName>

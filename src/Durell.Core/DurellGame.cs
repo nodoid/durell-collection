@@ -112,7 +112,8 @@ public sealed class DurellGame : Microsoft.Xna.Framework.Game
         Previews = new Previews(this);
         if (Director == null) Audio.Start();
         ApplySound();
-        ChangeScreen(new MenuScreen(this));
+        // phones and tablets: a splash screen while the games get ready (slow there); computers go straight to the menu
+        ChangeScreen(IsMobile && Director == null ? new SplashScreen(this) : new MenuScreen(this));
     }
 
     protected override void UnloadContent()
@@ -191,12 +192,29 @@ public sealed class DurellGame : Microsoft.Xna.Framework.Game
     protected override void Update(GameTime gameTime)
     {
         if (!_diagUpdate) { _diagUpdate = true; Diag("first update"); }
+        long nowTicks = System.Diagnostics.Stopwatch.GetTimestamp();
+        if (_lastTicks != 0 && _slowLogs < 40)
+        {
+            double ms = (nowTicks - _lastTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+            if (ms > 150)
+            {
+                _slowLogs++;
+                Diag($"slow frame {ms:F0} ms ({_screen?.GetType().Name})");
+            }
+        }
+        _lastTicks = nowTicks;
         Director?.BeforeUpdate(this);
         float dt = Director?.FixedDelta ?? (float)gameTime.ElapsedGameTime.TotalSeconds;
         dt = MathF.Min(dt, 0.1f);
         Clock += dt;
         UpdateLayout();
+        KeepTouchInPixels();
         Input.Update(ScreenToVirtual);
+        if (Input.Taps.Count > 0 && _diagTaps < 12)
+        {
+            _diagTaps++;
+            Diag($"tap at virtual {Input.Taps[0].Position} (screen {_screen.GetType().Name})");
+        }
         if (!IsMobile && Input.ToggleFullScreen) ToggleFullScreen();
         _screen.Update(dt);
         if (_saveTimer > 0 && (_saveTimer -= dt) <= 0) PersistSave();
@@ -241,6 +259,7 @@ public sealed class DurellGame : Microsoft.Xna.Framework.Game
     // Device testing: launched with DURELL_SELFSHOT=seconds[,seconds...], the app saves its own screen
     // to Documents/selfshot-N.png at those times (no effect otherwise).
     private float[]? _shotTimes;
+    private string? _selfPlay;
     private int _shotNext;
 
     /// <summary>Device testing: notes start-up stages in Documents/diag.txt when Documents/selfshot.txt exists.</summary>
@@ -259,6 +278,8 @@ public sealed class DurellGame : Microsoft.Xna.Framework.Game
     }
 
     private bool _diagUpdate, _diagDraw;
+    private int _diagTaps, _slowLogs;
+    private long _lastTicks;
 
     private void SelfShot()
     {
@@ -270,11 +291,37 @@ public sealed class DurellGame : Microsoft.Xna.Framework.Game
                 // or a file Documents/selfshot.txt holding the times (copied onto a test device)
                 string file = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "selfshot.txt");
                 if (string.IsNullOrEmpty(v) && System.IO.File.Exists(file)) v = System.IO.File.ReadAllText(file).Trim();
+                // an optional second line "play=GAME": start that game (at its preview moment) after 2 s
+                if (v != null && v.Contains('\n'))
+                {
+                    var lines = v.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    v = lines[0];
+                    foreach (var l in lines)
+                        if (l.StartsWith("play=")) _selfPlay = l[5..];
+                }
             }
             catch (Exception)
             {
             }
             _shotTimes = string.IsNullOrEmpty(v) ? Array.Empty<float>() : Array.ConvertAll(v.Split(','), x => float.Parse(x, System.Globalization.CultureInfo.InvariantCulture));
+        }
+        if (_selfPlay != null && Clock > 2)
+        {
+            var info = Catalog.Get(_selfPlay);
+            _selfPlay = null;
+            var ps = new PlayScreen(this, info) { ShowHints = false };
+            var p = ps.Program;
+            for (int f = 0; f < info.PreviewFrames; f++)
+            {
+                p.ClearKeys();
+                foreach (var (a, b, ks) in info.PreviewKeys)
+                    if (f >= a && f <= b) foreach (var k in ks) p.SetKey(k, true);
+                p.RunFrame();
+                p.SkipAudio();
+            }
+            p.ClearKeys();
+            ChangeScreen(ps);
+            Diag("playing " + info.Id);
         }
         if (_shotNext >= _shotTimes.Length || Clock < _shotTimes[_shotNext]) return;
         try
@@ -300,6 +347,23 @@ public sealed class DurellGame : Microsoft.Xna.Framework.Game
             }
         }
         _shotNext++;
+    }
+
+    /// <summary>
+    /// Touches must come in back-buffer pixels, which is what the layout maps; on iOS MonoGame otherwise
+    /// reports them in the window's points (a third of the pixels on a 3x phone), so every tap missed.
+    /// </summary>
+    private void KeepTouchInPixels()
+    {
+        if (!IsMobile) return;
+        var pp = GraphicsDevice.PresentationParameters;
+        if (Microsoft.Xna.Framework.Input.Touch.TouchPanel.DisplayWidth != pp.BackBufferWidth ||
+            Microsoft.Xna.Framework.Input.Touch.TouchPanel.DisplayHeight != pp.BackBufferHeight)
+        {
+            Diag($"touch display {Microsoft.Xna.Framework.Input.Touch.TouchPanel.DisplayWidth}x{Microsoft.Xna.Framework.Input.Touch.TouchPanel.DisplayHeight} -> {pp.BackBufferWidth}x{pp.BackBufferHeight}, window {Window.ClientBounds}");
+            Microsoft.Xna.Framework.Input.Touch.TouchPanel.DisplayWidth = pp.BackBufferWidth;
+            Microsoft.Xna.Framework.Input.Touch.TouchPanel.DisplayHeight = pp.BackBufferHeight;
+        }
     }
 
     private void UpdateLayout()

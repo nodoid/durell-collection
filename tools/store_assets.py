@@ -225,7 +225,7 @@ def preview(look, out_name, w, h):
            "-vf", vf, "-r", "30", "-c:v", "libx264", "-profile:v", "high", "-level", "4.0",
            "-preset", "slow", "-b:v", "11M", "-minrate", "11M", "-maxrate", "11M", "-bufsize", "11M", "-x264-params", "nal-hrd=cbr",
            "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-c:a", "aac", "-b:a", "256k", "-ar", "44100", "-ac", "2", "-shortest",
-           "-movflags", "+faststart", out]
+           "-t", "29.5", "-movflags", "+faststart", out]
     subprocess.run(cmd, check=True)
     print(f"  {out_name}")
 
@@ -242,15 +242,50 @@ def windows_trailer():
                     "-bf", "2", "-g", "15", "-flags", "+cgop",
                     "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-c:a", "aac", "-b:a", "384k", "-ar", "48000", "-ac", "2", "-shortest",
                     "-movflags", "+faststart", os.path.join(out, "trailer-1920x1080.mp4")], check=True)
-    cover(still("hd", "01-intro"), 1920, 1080).save(os.path.join(out, "trailer-thumbnail-1920x1080.png"))
+    cover(still("mac", "01-collection"), 1920, 1080).save(os.path.join(out, "trailer-thumbnail-1920x1080.png"))
     print("  windows/trailer: trailer-1920x1080.mp4, trailer-thumbnail-1920x1080.png")
 
 
+GAMEPLAY = [("harrier", "Harrier Attack"), ("harrier3d", "Harrier Attack 3D"), ("scuba", "Scuba Dive"), ("starfighter", "Star Fighter"),
+            ("galaxy", "Galaxy"), ("lunar", "Lunar Lander"), ("turbo", "Turbo Esprit")]
+
+
+def gameplay(gid, title):
+    """A longer gameplay video of one game (1920x1080, H.264 + AAC), from artifacts/capture/gameplay-GAME."""
+    src = os.path.join(CAPTURE, "gameplay-" + gid)
+    out = os.path.join(OUT, "videos", f"gameplay-{gid}-1920x1080.mp4")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
+                    "-i", os.path.join(src, "footage.mkv"), "-i", os.path.join(src, "soundtrack.wav"),
+                    "-vf", "scale=1920:1080:flags=lanczos,setsar=1,format=yuv420p", "-r", "30",
+                    "-c:v", "libx264", "-profile:v", "high", "-preset", "slow", "-crf", "16",
+                    "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-c:a", "aac", "-b:a", "256k", "-ar", "48000", "-ac", "2", "-shortest",
+                    "-movflags", "+faststart", out], check=True)
+    print(f"  videos/gameplay-{gid}-1920x1080.mp4")
+
+
 def videos():
+    """App previews (App Store: up to 30 s, these sizes), the Microsoft Store trailer, and gameplay videos.
+    Copies go to ~/Movies/The Durell Collection."""
     preview("video-iphone", "ios/app-preview-iphone-1920x886.mp4", 1920, 886)
     preview("video-ipad", "ios/app-preview-ipad-1600x1200.mp4", 1600, 1200)
     preview("video-mac", "macos/app-preview-mac-1920x1080.mp4", 1920, 1080)
     windows_trailer()
+    for gid, title in GAMEPLAY:
+        if os.path.exists(os.path.join(CAPTURE, "gameplay-" + gid, "footage.mkv")):
+            gameplay(gid, title)
+    movies = os.path.expanduser("~/Movies/The Durell Collection")
+    os.makedirs(movies, exist_ok=True)
+    copies = [("ios/app-preview-iphone-1920x886.mp4", "The Durell Collection - iPhone app preview (1920x886).mp4"),
+              ("ios/app-preview-ipad-1600x1200.mp4", "The Durell Collection - iPad app preview (1600x1200).mp4"),
+              ("macos/app-preview-mac-1920x1080.mp4", "The Durell Collection - Mac app preview (1920x1080).mp4"),
+              ("windows/trailer/trailer-1920x1080.mp4", "The Durell Collection - Windows trailer (1920x1080).mp4")]
+    copies += [(f"videos/gameplay-{gid}-1920x1080.mp4", f"The Durell Collection - {title} gameplay (1920x1080).mp4") for gid, title in GAMEPLAY]
+    for src, name in copies:
+        p = os.path.join(OUT, src)
+        if os.path.exists(p):
+            shutil.copyfile(p, os.path.join(movies, name))
+    print(f"  copied to {movies}")
 
 
 README = """# Store assets
@@ -291,4 +326,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if "--videos" in sys.argv:
+        videos()
+    else:
+        main()

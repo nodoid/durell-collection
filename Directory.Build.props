@@ -5,7 +5,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <!-- Single source of truth for the release version on every platform. -->
     <DurellVersion>1.0.0</DurellVersion>
-    <DurellBuildNumber>1</DurellBuildNumber>
+    <DurellBuildNumber>2</DurellBuildNumber>
     <Version>$(DurellVersion)</Version>
     <Company>Paul F. Johnson</Company>
     <Product>The Durell Collection</Product>

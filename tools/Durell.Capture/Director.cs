@@ -36,6 +36,8 @@ internal sealed partial class Director : ICaptureDirector
         {
             "check" => CheckScript(),
             "keycheck" => KeyCheckScript(look.Mobile),
+            "video-preview" => VideoPreviewScript(),
+            _ when script.StartsWith("video-") => VideoGameScript(script[6..]),
             "icon" => new List<Step> { new("icon", 0.3f, g => g.ChangeScreen(new IconScreen(g)), new[] { new Shot(0.2f, "icon") }) },
             _ => StillsScript(),
         };
@@ -46,6 +48,7 @@ internal sealed partial class Director : ICaptureDirector
     public void Attach(DurellGame game)
     {
         game.Audio.Muted = true;
+        if (_video) StartRecording(game);
     }
 
     // ------------------------------------------------------------------ building blocks
@@ -183,6 +186,7 @@ internal sealed partial class Director : ICaptureDirector
 
     public void AfterDraw(DurellGame game)
     {
+        RecordFrame(game);
         if (_stepIndex < 0 || _stepIndex >= _steps.Count) return;
         var step = _steps[_stepIndex];
         if (step.Shots == null) return;

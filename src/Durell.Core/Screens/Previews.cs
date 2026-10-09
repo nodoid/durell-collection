@@ -1,16 +1,20 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Durell.Games;
 using Durell.Graphics;
 using Durell.Machine;
+using Durell.Programs;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Durell.Screens;
 
 /// <summary>
-/// Picture thumbnails of every game for the menu: each game is run silently up to its title screen
-/// once, and the picture drawn into a small texture in the current look.
+/// Every game made ready for the menu: run silently (on background threads, all at once - this is
+/// slow on phones) up to its preview moment, kept running as the menu's live card, and its picture
+/// drawn into a small thumbnail texture in the current look.
 /// </summary>
 internal sealed class Previews
 {
@@ -19,22 +23,49 @@ internal sealed class Previews
     private readonly Dictionary<string, byte[]> _frames = new();
     private readonly Dictionary<string, RenderTarget2D> _thumbs = new();
     private readonly Dictionary<string, Look> _looks = new();
+    private readonly Dictionary<string, GameProgram> _programs = new();
+    private readonly ConcurrentQueue<(string Id, Look Look, GameProgram Program, byte[] Frame)> _done = new();
     private bool _thumbsEnhanced;
-    private int _next;
+    private bool _started;
 
     public Previews(DurellGame game) => _game = game;
 
-    /// <summary>Runs one more game up to its title screen (called once per update until all are done).</summary>
+    public int Total => Catalog.All.Count;
+    public int Ready => _frames.Count;
+
+    /// <summary>Starts preparing every game in the background (once).</summary>
+    public void Start()
+    {
+        if (_started) return;
+        _started = true;
+        foreach (var info in Catalog.All)
+        {
+            var i = info;
+            Task.Run(() =>
+            {
+                var look = i.Look();
+                var p = i.Demo(look);
+                _done.Enqueue((i.Id, look, p, (byte[])p.Index.Clone()));
+            });
+        }
+    }
+
+    /// <summary>Takes in the games that are ready (call once per update); true when all are.</summary>
     public bool Prepare()
     {
-        if (_next >= Catalog.All.Count) return true;
-        var info = Catalog.All[_next++];
-        var look = info.Look();
-        var p = info.Demo(look);
-        _frames[info.Id] = (byte[])p.Index.Clone();
-        _looks[info.Id] = look;
-        return _next >= Catalog.All.Count;
+        Start();
+        while (_done.TryDequeue(out var d))
+        {
+            _frames[d.Id] = d.Frame;
+            _looks[d.Id] = d.Look;
+            _programs[d.Id] = d.Program;
+        }
+        return _frames.Count >= Total;
     }
+
+    /// <summary>The game running at its preview moment (the menu's live card), or null until ready.</summary>
+    public GameProgram? Program(string id) => _programs.TryGetValue(id, out var p) ? p : null;
+    public Look? LookFor(string id) => _looks.TryGetValue(id, out var l) ? l : null;
 
     public byte[]? Frame(string id) => _frames.TryGetValue(id, out var f) ? f : null;
 

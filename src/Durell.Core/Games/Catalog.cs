@@ -123,7 +123,9 @@ internal static class Catalog
             {
                 Up = Keys(K.Up), Down = Keys(K.Down), Left = Keys(K.Left), Right = Keys(K.Right),
                 A = Keys(K.Down), B = Keys(K.Up), X = Keys(K.Return), Y = Keys(K.D1),
-                TiltHelp = "TILT    swim: tip the device the way you want to go",
+                TiltHelp = "TILT    swim: tip the device the way you want to go;  TAP to set off and to dive",
+                // a tap on the picture launches the boat (RIGHT), then dives (DOWN) - $146D / $146C say which it waits for
+                TapKeys = m => m[0x146D] == 1 ? Keys(K.Right) : m[0x146C] == 1 ? Keys(K.Down) : System.Array.Empty<K>(),
                 TiltOneAxis = true,
                 Touch = new List<TouchKey>(Arrows())
                 {

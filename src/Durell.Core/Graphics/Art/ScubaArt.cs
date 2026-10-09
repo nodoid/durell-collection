@@ -23,7 +23,19 @@ internal static class ScubaArt
         }
         all.Add(("scuba-oyster-open", () => Oyster(true)));
         all.Add(("scuba-oyster-shut", () => Oyster(false)));
+        for (int i = 0; i < 4; i++)
+        {
+            int f = i;
+            all.Add(($"scuba-oyster{f}", () => OysterOpening(f / 3f)));
+        }
         all.Add(("scuba-pearl", Pearl));
+        for (int i = 0; i < 4; i++)
+        {
+            int f = i;
+            all.Add(($"scuba-octo{f}", () => OctoBody(f)));
+            all.Add(($"scuba-tentacle{f}", () => Tentacle(f)));
+        }
+        all.Add(("scuba-tentacle-tip", TentacleTip));
         for (int i = 0; i < 4; i++)
         {
             int k = i;
@@ -368,6 +380,127 @@ internal static class ScubaArt
                 break;
             }
         }
+        return c;
+    }
+
+    private static readonly Color OctoRed = new(206, 44, 38);
+
+    /// <summary>
+    /// The octopus as the Oric draws it: seen side-on, facing right, a bulbous head with a spiky crown and
+    /// curled arms beneath (its long tentacle is drawn separately): 144 x 128, base at the bottom.
+    /// </summary>
+    public static Canvas OctoBody(int frame)
+    {
+        var c = new Canvas(144, 128);
+        float breathe = Swing(frame, 3);
+        // curled arms under the body
+        for (int i = 0; i < 4; i++)
+        {
+            float x = 26 + i * 22;
+            var arm = new Path().MoveTo(x, 92).CubicTo(x - 10, 110 + i % 2 * 4, x + 14, 124, x + 16 - Swing(frame + i, 3), 108);
+            c.Stroke(arm, 9 - i * 0.6f, ArtKit.Darker(OctoRed, 0.15f + i * 0.05f));
+            c.Stroke(arm, 3, ArtKit.Lighter(OctoRed, 0.25f), 0.5f);
+        }
+        // the head: a big round mantle leaning back, with a crown of spines
+        var head = new Path().Smooth(new Vector2(20, 96), new Vector2(14, 60 - breathe), new Vector2(40, 26 - breathe), new Vector2(84, 22 - breathe),
+            new Vector2(118, 46), new Vector2(124, 82), new Vector2(104, 102), new Vector2(60, 106));
+        for (int i = 0; i < 7; i++)
+        {
+            float a = -2.6f + i * 0.33f;
+            var b = new Vector2(70 + MathF.Cos(a) * 46, 64 + MathF.Sin(a) * 40 - breathe);
+            var tip = new Vector2(70 + MathF.Cos(a) * (62 + i % 2 * 8), 64 + MathF.Sin(a) * (56 + i % 2 * 8) - breathe);
+            c.Fill(Path.Polygon(b + new Vector2(-6, 2), tip, b + new Vector2(6, 2)), ArtKit.Darker(OctoRed, 0.25f));
+        }
+        c.Fill(head, Brush.Func((x, y) =>
+        {
+            float n = Noise.Fbm(x * 0.08f, y * 0.08f, 410, 4);
+            return ArtKit.Mix(OctoRed, new Color(120, 20, 22), MathF.Max(0, n - 0.45f) * 2.2f).ToVector4();
+        }));
+        c.Fill(head, Brush.Radial(new Vector2(58, 44), 70, 60, (0f, new Color(255, 200, 180, 120)), (0.55f, new Color(255, 255, 255, 0)), (1f, new Color(0, 0, 0, 120))));
+        // spots
+        for (int i = 0; i < 9; i++)
+            c.Fill(Path.Circle(36 + Noise.Value(i * 1.3f, 0, 420) * 70, 40 + Noise.Value(i * 2.1f, 1, 421) * 50, 2.5f), new Color(250, 170, 150), 0.6f);
+        c.Stroke(head, 1.4f, new Color(80, 14, 16), 0.9f);
+        // the eye, looking right
+        c.Fill(Path.Ellipse(98, 64, 11, 9), new Color(250, 228, 150));
+        c.Fill(Path.Ellipse(102, 65, 4, 6), new Color(12, 10, 10));
+        c.Stroke(new Path().MoveTo(86, 54).QuadTo(98, 49, 110, 55), 2, new Color(90, 16, 16), 0.9f);
+        return c;
+    }
+
+    /// <summary>One cell of the long tentacle: a tapering-free band with suckers, rippling (tiles side by side): 64 x 48.</summary>
+    public static Canvas Tentacle(int frame)
+    {
+        var c = new Canvas(64, 48);
+        var top = new List<Vector2>();
+        var bottom = new List<Vector2>();
+        for (int i = 0; i <= 16; i++)
+        {
+            float x = i * 4, y = 24 + MathF.Sin((x / 64f + frame / 4f) * MathF.Tau) * 6;
+            top.Add(new Vector2(x, y - 9));
+            bottom.Add(new Vector2(x, y + 9));
+        }
+        var band = new Path().MoveTo(top[0]);
+        foreach (var v in top) band.LineTo(v);
+        for (int i = bottom.Count - 1; i >= 0; i--) band.LineTo(bottom[i]);
+        band.Close();
+        c.Fill(band, Brush.Linear(0, 10, 0, 40, ArtKit.Lighter(OctoRed, 0.25f), ArtKit.Darker(OctoRed, 0.45f)));
+        // suckers along the underside
+        for (int i = 0; i < 4; i++)
+        {
+            float x = 8 + i * 16, y = 24 + MathF.Sin((x / 64f + frame / 4f) * MathF.Tau) * 6 + 5;
+            c.Fill(Path.Ellipse(x, y, 4, 3), new Color(250, 190, 170));
+            c.Fill(Path.Ellipse(x, y, 2, 1.5f), new Color(170, 60, 60));
+        }
+        return c;
+    }
+
+    /// <summary>The curled end of the tentacle: 64 x 48.</summary>
+    public static Canvas TentacleTip()
+    {
+        var c = new Canvas(64, 48);
+        var tip = new Path().MoveTo(0, 15).CubicTo(30, 12, 52, 10, 56, 22).CubicTo(58, 34, 40, 36, 38, 28).CubicTo(36, 22, 46, 22, 44, 27)
+            .CubicTo(40, 30, 30, 34, 0, 33).Close();
+        c.Fill(tip, Brush.Linear(0, 10, 0, 36, ArtKit.Lighter(OctoRed, 0.25f), ArtKit.Darker(OctoRed, 0.45f)));
+        c.Stroke(tip, 1, new Color(90, 16, 16), 0.7f);
+        return c;
+    }
+
+    /// <summary>An oyster opening (0 shut .. 1 wide open, its pearl showing): 96 x 64.</summary>
+    public static Canvas OysterOpening(float open)
+    {
+        var c = new Canvas(96, 64);
+        var shell = new Color(150, 140, 120);
+        var lower = new Path().MoveTo(10, 46).QuadTo(48, 64, 86, 46).QuadTo(48, 52, 10, 46).Close();
+        c.Fill(lower, Brush.Linear(0, 44, 0, 60, ArtKit.Lighter(shell, 0.1f), ArtKit.Darker(shell, 0.5f)));
+        if (open > 0.05f)
+        {
+            // the pink inside, and the pearl once it is open enough to see
+            c.Fill(Path.Ellipse(48, 46, 30, 3 + 3 * open), new Color(200, 170, 180));
+            if (open > 0.5f)
+            {
+                float r = 7 * Math.Clamp((open - 0.5f) * 2, 0, 1);
+                c.Fill(Path.Circle(48, 46 - r * 0.6f, r), Brush.Radial(new Vector2(45, 43 - r * 0.6f), r + 2, r + 2, (0f, Color.White), (0.5f, new Color(240, 236, 228)), (1f, new Color(170, 165, 175))));
+            }
+        }
+        // the upper shell hinged at the left, lifting
+        float lift = open * 1.05f;
+        var hinge = new Vector2(10, 46);
+        Vector2 R(float x, float y)
+        {
+            var d = new Vector2(x, y) - hinge;
+            float cs = MathF.Cos(-lift), sn = MathF.Sin(-lift);
+            return hinge + new Vector2(d.X * cs - d.Y * sn, d.X * sn + d.Y * cs);
+        }
+        var upper = new Path().MoveTo(R(10, 46)).CubicTo(R(30, 26).X, R(30, 26).Y, R(66, 26).X, R(66, 26).Y, R(86, 46).X, R(86, 46).Y)
+            .QuadTo(R(48, 50).X, R(48, 50).Y, R(10, 46).X, R(10, 46).Y).Close();
+        c.Fill(upper, Brush.Func((x, y) =>
+        {
+            float ring = MathF.Sin(MathF.Sqrt((x - 10) * (x - 10) + (y - 46) * (y - 46)) * 0.7f) * 0.5f + 0.5f;
+            return ArtKit.Mix(ArtKit.Lighter(shell, 0.2f), ArtKit.Darker(shell, 0.3f), ring * 0.6f + Noise.Fbm(x * 0.2f, y * 0.2f, 500, 3) * 0.4f).ToVector4();
+        }));
+        c.Stroke(upper, 1, ArtKit.Darker(shell, 0.6f), 0.8f);
+        c.Stroke(lower, 1, ArtKit.Darker(shell, 0.6f), 0.8f);
         return c;
     }
 }

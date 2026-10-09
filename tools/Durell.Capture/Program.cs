@@ -60,6 +60,10 @@ internal static class Looks
         "android-tablet" => new("android-tablet", 2560, 1600, true, (0, 0, 0, 0)),
         "preview" => new("preview", 1280, 800, false, (0, 0, 0, 0)),
         "preview-phone" => new("preview-phone", 1434, 660, true, (93, 0, 93, 31)),
+        // the stores' video sizes, rendered natively
+        "video-iphone" => new("video-iphone", 1920, 886, true, (124, 0, 124, 42)),
+        "video-ipad" => new("video-ipad", 1600, 1200, true, (0, 0, 0, 24)),
+        "video-mac" => new("video-mac", 1920, 1080, false, (0, 0, 0, 0)),
         "icon" => new("icon", 1024, 1024, false, (0, 0, 0, 0)),
         _ => throw new ArgumentException("unknown look " + name),
     };

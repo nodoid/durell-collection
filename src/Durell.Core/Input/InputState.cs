@@ -22,6 +22,7 @@ public sealed class InputState
     private GamePadState _gp, _prevGp;
     private MouseState _mouse, _prevMouse;
     private bool _touchSeen;
+    private readonly HashSet<int> _knownTouches = new(), _liveTouches = new();
 
     public List<Tap> Taps { get; } = new();
     /// <summary>Fingers (or the held mouse) on the screen this frame, virtual coordinates.</summary>
@@ -82,13 +83,23 @@ public sealed class InputState
         Touches.AddRange(ForcedTouches);
         Tilt.Update();
 
+        _liveTouches.Clear();
         foreach (var touch in TouchPanel.GetState())
         {
             _touchSeen = true;
             var p = screenToVirtual(touch.Position);
+            _liveTouches.Add(touch.Id);
+            bool fresh = _knownTouches.Add(touch.Id);
             if (touch.State is TouchLocationState.Pressed or TouchLocationState.Moved) Touches.Add(p);
-            if (touch.State == TouchLocationState.Pressed) Taps.Add(new Tap(p));
+            if (touch.State == TouchLocationState.Pressed && fresh) Taps.Add(new Tap(p));
+            else if (touch.State == TouchLocationState.Released && fresh)
+            {
+                // pressed and lifted between two frames (a slow frame): still a tap, and held for this frame
+                Taps.Add(new Tap(p));
+                Touches.Add(p);
+            }
         }
+        _knownTouches.IntersectWith(_liveTouches);
 
         var mp = screenToVirtual(new Vector2(_mouse.X, _mouse.Y));
         MouseMoved = _mouse.X != _prevMouse.X || _mouse.Y != _prevMouse.Y;

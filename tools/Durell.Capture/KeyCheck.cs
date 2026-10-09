@@ -122,7 +122,9 @@ internal sealed partial class Director
         var scubaPhases = mobile
             ? new List<Phase>
             {
-                Tilt("tilt right = launch", 40, 20, (b, m, p) => m[0x146C] == 1),
+                TouchPicture("tap = launch the boat", (b, m, p) => m[0x146C] == 1),
+                TouchPicture("tap = dive", (b, m, p) => m[0x146C] == 0 && m[0x146D] == 0) with { Before = ClearSea },
+                Tilt("tilt right = swim right (after the tap dive)", 40, 20, (b, m, p) => m[0x140F] > b[0x140F] || m[0x1419] == 2) with { Before = ClearSea },
                 Tilt("tilt towards you = dive", 20, 0, (b, m, p) => m[0x146C] == 0 && m[0x146D] == 0) with { Before = ClearSea },
                 Tilt("tilt left = swim left", 40, -20, (b, m, p) => m[0x140F] < b[0x140F] || m[0x1419] == 3) with { Before = ClearSea },
                 Tilt("tilt right = swim right", 40, 20, (b, m, p) => m[0x140F] > b[0x140F] || m[0x1419] == 2) with { Before = ClearSea },

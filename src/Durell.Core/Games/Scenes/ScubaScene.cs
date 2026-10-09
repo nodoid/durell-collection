@@ -26,12 +26,15 @@ internal sealed partial class ScubaLook
     private float _lastDraw;
     private readonly List<(int Id, string Kind, int Frame, bool Left, float W)> _creatures = new();
     private readonly (Vector2 Cell, int State)[] _oysters = new (Vector2, int)[9];
+    private readonly float[] _oysterOpen = new float[9];
     private int _diverFacing = 2;
     private bool _diverAlive = true;
     /// <summary>Aboard: the game is waiting for RIGHT to launch ($146D) or DOWN to dive ($146C); his position is stale then.</summary>
     private bool _onBoat;
     private bool _urchinOn;
-    private int _tentacle;
+    /// <summary>Each octopus's tentacle as the game shows it: where it starts (world column) and its length in cells.</summary>
+    private readonly Dictionary<int, (float Start, float Length)> _tentacles = new();
+    private readonly Dictionary<int, float> _tentacleShown = new();
 
     public override (int Y0, int Y1)[] HudRows => new[] { (0, 24), (208, 224) };
 
@@ -97,7 +100,26 @@ internal sealed partial class ScubaLook
                 int cell = a - 0xBB80;
                 _oysters[i] = (SeaCell(cell % 40 + 0.5f, cell / 40) + new Vector2(0, 8), m[a] - 0x30);
             }
-            _tentacle = m[0x1421];
+        }
+        // the octopuses' tentacles: a run of tentacle characters along the body's bottom row on the game's screen
+        for (int i = 0; i < _world.Octopuses.Count; i++)
+        {
+            var o = _world.Octopuses[i];
+            bool seaBed = o.Y < ScubaWorld.SeaRows;
+            int oc, orow;
+            if (seaBed && !_caves) { oc = o.X - 57; orow = o.Y + 4; }
+            else if (!seaBed && _caves) { oc = o.X - ScubaWorld.CellW * m[0x1448] + 3; orow = o.Y - (ScubaWorld.SeaRows + ScubaWorld.CellH * m[0x1449]) + 5; }
+            else continue;
+            int bottom = orow + 1;
+            if (oc < 1 || oc > 38 || bottom < 4 || bottom > 25) continue;
+            bool Body(byte ch) => seaBed ? ch is >= 0x21 and <= 0x27 : ch is >= 0x21 and <= 0x24;
+            bool Arm(byte ch) => seaBed ? ch is >= 0x28 and <= 0x2A : ch is 0x25 or 0x26;      // cave: segment $26, tip $25
+            int c = Math.Max(1, oc - 2);
+            while (c < 40 && c < oc + 2 && !Body(m[0xBB80 + bottom * 40 + c])) c++;
+            while (c < 40 && Body(m[0xBB80 + bottom * 40 + c])) c++;
+            int start = c;
+            while (c < 40 && Arm(m[0xBB80 + bottom * 40 + c])) c++;
+            _tentacles[i] = (o.X + (start - oc), c - start);
         }
         // the urchin hunting in the caves
         _urchinOn = _caves && m[0x145C] != 0;
@@ -181,18 +203,43 @@ internal sealed partial class ScubaLook
         g.Sprite(ArtCache.Get(dev, "scuba-boat"), S(boat + new Vector2(0, -3)), 46 * k, MathF.Sin(t * 1.3f) * 0.02f, Color.White * alpha);
 
         // oysters, octopuses, treasure
-        foreach (var (cell, state) in _oysters)
+        // oysters open and close as the game's timers say: shut ($30), opening ($31), open with the pearl ($32)
+        for (int i = 0; i < _oysters.Length; i++)
         {
+            var (cell, state) = _oysters[i];
             if (cell == Vector2.Zero) continue;
-            g.Sprite(ArtCache.Get(dev, state >= 2 ? "scuba-oyster-open" : "scuba-oyster-shut"), S(cell + new Vector2(0, -3)), 10 * k, 0, Color.White * alpha);
+            float openTo = Math.Clamp(state, 0, 2) / 2f;
+            _oysterOpen[i] += (openTo - _oysterOpen[i]) * MathF.Min(1, dt * 3);
+            int stage = Math.Clamp((int)MathF.Round(_oysterOpen[i] * 3), 0, 3);
+            g.Sprite(ArtCache.Get(dev, $"scuba-oyster{stage}"), S(cell + new Vector2(0, -3)), 11 * k, 0, Color.White * alpha);
         }
         int frame = (int)(t * 4) & 3;
-        foreach (var o in _world.Octopuses)
+        for (int i = 0; i < _world.Octopuses.Count; i++)
         {
-            var p = new Vector2(o.X * 6 + 9, o.Y * 8 + 8);
+            var o = _world.Octopuses[i];
             bool seaBed = o.Y < ScubaWorld.SeaRows;
-            float size = seaBed ? 30 + _tentacle * 1.5f : 22;
-            g.Sprite(ArtCache.Get(dev, $"scuba-octopus{(frame + o.X) & 3}"), S(p), size * k, 0, Color.White * alpha);
+            float baseY = (o.Y + 2) * 8;
+            // the tentacle along the floor (eased to the game's length); octopuses out of the game's sight rest theirs
+            var (start, length) = _tentacles.TryGetValue(i, out var tl) ? tl : (o.X + (seaBed ? 3 : 2), 2f);
+            float shown = _tentacleShown.TryGetValue(i, out var sv) ? sv : length;
+            shown += (length - shown) * MathF.Min(1, dt * 10);
+            _tentacleShown[i] = shown;
+            float y = baseY - 4;
+            int segs = (int)MathF.Ceiling(shown);
+            for (int seg = 0; seg < segs; seg++)
+            {
+                float x = (start + seg) * 6;
+                float wpx = MathF.Min(1, shown - seg) * 6;
+                bool last = seg == segs - 1;
+                var tex = ArtCache.Get(dev, last ? "scuba-tentacle-tip" : $"scuba-tentacle{(frame + seg) & 3}");
+                var a0 = S(new Vector2(x, y - 4.5f));
+                g.Texture(tex, new RectangleF(a0.X, a0.Y, (last ? 7 : wpx + 0.3f) * k, 9 * ky), Color.White * alpha);
+            }
+            // the body: side-on, facing right, sitting on the floor
+            float bw = seaBed ? 26 : 17;
+            var body = ArtCache.Get(dev, $"scuba-octo{(frame + o.X) & 3}");
+            var bc = S(new Vector2(o.X * 6 + (seaBed ? 10 : 7), baseY - bw * 128 / 144f / 2));
+            g.Sprite(body, bc, bw * k, 0, Color.White * alpha);
         }
         foreach (var (cell, kind) in _world.Items)
         {

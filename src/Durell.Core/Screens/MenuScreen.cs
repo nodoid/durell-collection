@@ -70,9 +70,11 @@ internal sealed class MenuScreen : Screen
         // the chosen game runs on its card (silently, no keys)
         if (_liveId != Sel.Id)
         {
-            _liveId = Sel.Id;
-            _liveLook = Sel.Look();
-            _live = Sel.Demo(_liveLook);
+            // the prepared game keeps running as the live card (no new fast-forward: slow on phones)
+            var ready = Game.Previews.Program(Sel.Id);
+            _live = ready;
+            _liveLook = ready != null ? Game.Previews.LookFor(Sel.Id) : null;
+            if (ready != null) _liveId = Sel.Id;
             _liveAcc = 0;
         }
         if (_live != null)
