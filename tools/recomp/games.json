@@ -1,0 +1,133 @@
+{
+  "harrier": {
+    "snap": "originals/snap/harrier",
+    "namespace": "Durell.Games.Harrier",
+    "class": "HarrierCode",
+    "out": "src/Durell.Core/Games/Harrier/HarrierCode.g.cs",
+    "entries": [
+      "FA9F",
+      "FAB5",
+      "FACB",
+      "FAE1",
+      "FB14",
+      "FB2A",
+      "FB40",
+      "FBD0",
+      "FC18",
+      "0A2F"
+    ],
+    "probes": [
+      "22F3"
+    ]
+  },
+  "scuba": {
+    "snap": "originals/snap/scuba",
+    "namespace": "Durell.Games.Scuba",
+    "class": "ScubaCode",
+    "out": "src/Durell.Core/Games/Scuba/ScubaCode.g.cs",
+    "entries": [
+      "FA9F",
+      "FAB5",
+      "FACB",
+      "FAE1",
+      "FB14",
+      "FB2A",
+      "FB40",
+      "FBD0",
+      "FC18"
+    ]
+  },
+  "starfighter": {
+    "snap": "originals/snap/starfighter",
+    "namespace": "Durell.Games.StarFighter",
+    "class": "StarFighterCode",
+    "out": "src/Durell.Core/Games/StarFighter/StarFighterCode.g.cs",
+    "entries": [
+      "FA9F",
+      "FAB5",
+      "FACB",
+      "FAE1",
+      "FB14",
+      "FB2A",
+      "FB40",
+      "FBD0",
+      "FC18"
+    ],
+    "patches": {
+      "97F5": {
+        "tape": "originals/tapes/starfighter/starfighter_oric1.tap",
+        "block": 1,
+        "len": 11
+      }
+    },
+    "patches_note": "The Atmos tape image has 'STASTARFIGH' over code at $97F5; the bytes come from the Oric-1 tape (same layout there). Without this, destroying an enemy in combat jumped into the text."
+  },
+  "galaxy": {
+    "snap": "originals/snap/galaxy",
+    "namespace": "Durell.Games.Galaxy",
+    "class": "GalaxyCode",
+    "out": "src/Durell.Core/Games/Galaxy/GalaxyCode.g.cs"
+  },
+  "turbo": {
+    "snap": "originals/snap/turbo",
+    "namespace": "Durell.Games.Turbo",
+    "class": "TurboCode",
+    "out": "src/Durell.Core/Games/Turbo/TurboCode.g.cs",
+    "writable_rom": true,
+    "volatile": [],
+    "hooks": {
+      "0530": "DiskRead"
+    },
+    "labels": "turbo/build/turbo.lbl",
+    "dbg": "turbo/build/turbo.dbg",
+    "discovery_overlay": [
+      [
+        "turbo/build/turbo.bin.menu",
+        "5C00"
+      ]
+    ],
+    "discovery_bytes": {
+      "73E6": "4C label:L7401",
+      "7401": "4C label:L7401"
+    },
+    "dbg_data_segments": [
+      "ZXRAM",
+      "ZXRAM2",
+      "ZXRAM3",
+      "CHARSET",
+      "DASHBLOB",
+      "RODATA",
+      "RODATA2",
+      "RODATA3",
+      "RODATA4",
+      "MRODATA",
+      "RODATAH1",
+      "RODATAH2",
+      "TABLES"
+    ],
+    "probes": [
+      "5EBA",
+      "C11B"
+    ],
+    "leader_ranges": [
+      [
+        "C81B",
+        "C8F2"
+      ]
+    ]
+  },
+  "lunar": {
+    "snap": "originals/snap/lunar",
+    "namespace": "Durell.Games.Lunar",
+    "class": "LunarRom",
+    "out": "src/Durell.Core/Games/Lunar/LunarRom.g.cs",
+    "snapshot_pc": false,
+    "entries": [
+      "FA9F",
+      "FACB",
+      "FB40",
+      "FBD0",
+      "FC18"
+    ]
+  }
+}

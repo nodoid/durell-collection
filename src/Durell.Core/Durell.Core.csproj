@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Durell</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <!-- the translated programs are large methods full of gotos -->
+    <NoWarn>$(NoWarn);CS0162;CS0164</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Compile-time reference only; each platform head supplies its own MonoGame runtime. -->
+    <PackageReference Include="MonoGame.Framework.Native" Version="$(MonoGameVersion)">
+      <PrivateAssets>All</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Games\**\*.snap;Games\**\*.disk" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Durell.Tests" />
+    <InternalsVisibleTo Include="Durell.Runner" />
+    <InternalsVisibleTo Include="Durell.Capture" />
+    <InternalsVisibleTo Include="Durell.ArtLab" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Durell.Android/Durell.Android.csproj" />
+    <Project Path="src/Durell.Core/Durell.Core.csproj" />
+    <Project Path="src/Durell.Desktop/Durell.Desktop.csproj" />
+    <Project Path="src/Durell.iOS/Durell.iOS.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Durell.Tests/Durell.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Durell.ArtLab/Durell.ArtLab.csproj" />
+    <Project Path="tools/Durell.Capture/Durell.Capture.csproj" />
+    <Project Path="tools/Durell.Runner/Durell.Runner.csproj" />
+  </Folder>
+</Solution>

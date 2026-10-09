@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <!-- Android 12 (API 31) and later; targets the latest API (set in AndroidManifest.xml). -->
+    <SupportedOSPlatformVersion>31</SupportedOSPlatformVersion>
+    <RootNamespace>Durell.Android</RootNamespace>
+    <AssemblyName>DurellCollection</AssemblyName>
+    <ApplicationId>uk.co.allthejohnsons.durellcollection</ApplicationId>
+    <ApplicationTitle>Durell Collection</ApplicationTitle>
+    <ApplicationVersion>$(DurellBuildNumber)</ApplicationVersion>
+    <ApplicationDisplayVersion>$(DurellVersion)</ApplicationDisplayVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <AndroidPackageFormats>aab;apk</AndroidPackageFormats>
+    <AndroidLinkMode>SdkOnly</AndroidLinkMode>
+    <RunAOTCompilation>false</RunAOTCompilation>
+  </PropertyGroup>
+  <!-- Release signing: supply via build/build-release.sh (reads signing/android.properties). -->
+  <PropertyGroup Condition="'$(AndroidSigningKeyStore)' != ''">
+    <AndroidKeyStore>true</AndroidKeyStore>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Durell.Core\Durell.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.Android" Version="$(MonoGameVersion)" />
+  </ItemGroup>
+</Project>

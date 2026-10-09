@@ -1,0 +1,37 @@
+# Build output
+bin/
+obj/
+# The original tapes, ROM images, snapshots and coverage logs (copyrighted; kept outside git)
+originals/
+# Release packages, generated store assets, capture work files
+releases/
+stores/
+artifacts/
+# Signing material and personal account settings - never commit
+signing/
+# Editors and macOS
+.vs/
+.idea/
+*.user
+*.DotSettings.user
+.DS_Store
+# makemsix binaries are built locally (build/windows/build-makemsix.sh) - they embed local paths
+tools/msix/
+# Python caches
+__pycache__/
+# Apple/Android signing material, wherever it lands
+*.mobileprovision
+*.provisionprofile
+*.p8
+*.p12
+*.cer
+*.keystore
+*.jks
+# Anything taken from the original games (copyright): generated locally by tools/recomp/make_games.sh
+src/Durell.Core/Games/**/*.g.cs
+src/Durell.Core/Games/**/*.snap
+src/Durell.Core/Games/**/*.disk
+# Lunar Lander's game is a transcription of the original BASIC listing
+src/Durell.Core/Games/Lunar/LunarProgram.cs
+# Frame dumps from development runs
+turnshots*/

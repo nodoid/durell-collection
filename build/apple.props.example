@@ -1,0 +1,7 @@
+<Project>
+  <!-- Copy to signing/apple.props (git-ignored) with your own signing identities. -->
+  <PropertyGroup>
+    <DurellAppleDevIdentity>Apple Development: Your Name (XXXXXXXXXX)</DurellAppleDevIdentity>
+    <DurellAppleDistIdentity>Apple Distribution: Your Name (XXXXXXXXXX)</DurellAppleDistIdentity>
+  </PropertyGroup>
+</Project>

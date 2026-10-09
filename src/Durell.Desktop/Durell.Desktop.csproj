@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Desktop head for Windows and macOS (MonoGame DesktopGL / SDL2 + OpenGL). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Durell.Desktop</RootNamespace>
+    <AssemblyName>DurellCollection</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="Exists('..\..\art\generated\windows\DurellCollection.ico')">..\..\art\generated\windows\DurellCollection.ico</ApplicationIcon>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <TieredCompilation>false</TieredCompilation>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyVersion>$(DurellVersion).0</AssemblyVersion>
+    <FileVersion>$(DurellVersion).$(DurellBuildNumber)</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Durell.Core\Durell.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="$(MonoGameVersion)" />
+  </ItemGroup>
+</Project>
