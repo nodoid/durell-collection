@@ -377,8 +377,8 @@ internal sealed class MenuScreen : Screen
             ? new[] { "Tilt the device to move, touch the picture to fire. TILT on",
                       "the menu switches tilt off for on-screen arrows; tap the bubble",
                       "to re-centre. Buttons give the other keys; KEYS opens a full",
-                      "Oric keyboard. II pauses." }
-            : new[] { "The keyboard is the Oric's; KEYS (or K) redefines a game's keys.", "ESC pause   F2 look   F11 full screen   -/+ volume (menu)", "A gamepad works too (START pauses)." };
+                      "Oric keyboard. II pauses; QUIT (top left) returns here." }
+            : new[] { "The keyboard is the Oric's; KEYS (or K) redefines a game's keys.", "ESC pause   QUIT (top left) menu   F2 look   F11 full screen", "A gamepad works too (START pauses)." };
         foreach (var line in general)
         {
             g.Text(line, r.X + 22, y, Ui.Dim, 1f, false);

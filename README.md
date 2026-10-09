@@ -46,6 +46,7 @@ moves continuously instead:
 | Firing | The game's own key | Touch the game picture (away from the buttons): `Controls.TapFire` |
 | Other keys | The keyboard is the Oric's; KEYS on the menu / pause menu (or K) redefines any game's keys (`Input/KeyBindings.cs`, `Screens/KeysEditor.cs`, saved per game) | Buttons for the other keys (bombs, shield, map), menu keys at the top left, KEYS for a full Oric keyboard |
 | Pause | Esc (or a controller's Start) | II button, Android Back |
+| Back to the menu | QUIT button at the top left | QUIT button at the top left |
 | Look | F2 or LOOK | LOOK on the menu / pause menu |
 | Volume | SOUND - / + on the menu, or the - and + keys (controller: LB / RB); click SOUND for off/on | SOUND - / + on the menu; tap SOUND for off/on |
 

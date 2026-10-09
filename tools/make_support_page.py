@@ -122,6 +122,7 @@ footer {{ color: var(--muted); font-size: 14px; padding: 8px 0 40px; }}
 <tr><td>Firing</td><td>The game's own key (rockets <kbd>Space</kbd>, Turbo <kbd>K</kbd>...)</td><td><strong>Touch the game picture</strong> - anywhere away from the buttons</td></tr>
 <tr><td>The games' other keys</td><td>Your keyboard is the Oric's: letters, digits, arrows, <kbd>Space</kbd> and <kbd>Return</kbd> work as they did. <em>KEYS</em> on the menu (or <kbd>K</kbd>, or the pause menu) redefines any game's keys</td><td>Buttons on the screen for the other keys a game needs (bombs, shield, map); small keys at the top left for menu choices; <em>KEYS</em> opens a full Oric keyboard</td></tr>
 <tr><td>Pause</td><td><kbd>Esc</kbd></td><td>The <em>II</em> button; Back on Android</td></tr>
+<tr><td>Back to the menu</td><td><em>QUIT</em> at the top left (or <em>MENU</em> in the pause menu)</td><td><em>QUIT</em> at the top left</td></tr>
 <tr><td>Switch the look</td><td><kbd>F2</kbd>, or <em>LOOK</em></td><td><em>LOOK</em> on the menu or the pause menu</td></tr>
 <tr><td>Volume</td><td><em>-</em> and <em>+</em> beside <em>SOUND</em> on the menu, or the <kbd>-</kbd> and <kbd>+</kbd> keys (a controller's shoulder buttons)</td><td><em>-</em> and <em>+</em> beside <em>SOUND</em> on the menu</td></tr>
 <tr><td>Full screen</td><td><kbd>F11</kbd></td><td>Always</td></tr>

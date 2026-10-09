@@ -36,6 +36,9 @@ internal sealed class PlayScreen : Screen
     private KeyBindings _bindings;
     private KeysEditor? _keysEditor;
     private int _tiltDir, _tiltGap;
+    /// <summary>The QUIT button (top left): returns to the menu.</summary>
+    private RectangleF _quitRect;
+    internal RectangleF QuitButton => _quitRect;
     private float _acc;
     private bool _paused;
     private int _pauseSel;
@@ -283,6 +286,7 @@ internal sealed class PlayScreen : Screen
         }
 
         _touchKeys.Clear();
+        if (!_paused && DrawQuit(g)) return;
         if (TouchUi && !_paused) DrawTouch(g, pic);
         string? hint = !TouchUi ? "ESC PAUSES  -  F2 SWITCHES THE LOOK" : TiltOn ? "TILT TO PLAY  -  TAP THE BUBBLE TO CENTRE" : null;
         if (hint != null && ShowHints && _hint > 0 && !_paused)
@@ -301,6 +305,23 @@ internal sealed class PlayScreen : Screen
         if (_paused) DrawPause(g);
     }
 
+    /// <summary>The QUIT button at the top left: one tap or click returns to the menu (true when it has).</summary>
+    private bool DrawQuit(Gfx g)
+    {
+        var s = g.Safe;
+        // in the left margin beside the picture when it fits there
+        float margin = PictureArea(g).X - s.X;
+        float w = Math.Clamp(margin - 8, 34, 44);
+        _quitRect = new RectangleF(margin >= 42 ? s.X + (margin - w) / 2 : s.X + 6, 8, w, 26);
+        bool hover = Game.Input.Hover(_quitRect);
+        g.RoundRect(_quitRect, 7, Color.Black * (hover ? 0.75f : 0.5f));
+        g.RoundRect(_quitRect.Inflate(1), 8, _info.Accent * 0.3f);
+        g.TextCentred("QUIT", _quitRect.Center.X, _quitRect.Y + 9, Color.White, 1f, false);
+        if (!Game.Input.Tapped(_quitRect)) return false;
+        Game.ChangeScreen(new MenuScreen(Game));
+        return true;
+    }
+
     private void DrawTouch(Gfx g, RectangleF pic)
     {
         var inp = Game.Input;
@@ -314,6 +335,7 @@ internal sealed class PlayScreen : Screen
 
         // pause button
         _buttonAreas.Clear();
+        _buttonAreas.Add(_quitRect.Inflate(4));
         TouchButtons.Clear();
         Picture = pic;
         var pr = new RectangleF(s.Right - 40, 8, 32, 26);
@@ -408,7 +430,7 @@ internal sealed class PlayScreen : Screen
             if (t.Slot == TouchSlot.Top) tops.Add(t);
         if (tops.Count > 0)
         {
-            float x0 = s.X + 6, y0 = 8;
+            float x0 = s.X + 6, y0 = 40;        // below the QUIT button
             float area = overlay ? 150 : MathF.Max(70, leftW - 12);
             const float kw = 30, kh = 24, gap = 4;
             int cols = Math.Max(1, (int)((area + gap) / (kw + gap)));

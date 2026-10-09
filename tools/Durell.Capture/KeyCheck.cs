@@ -223,6 +223,27 @@ internal sealed partial class Director
         foreach (bool enhanced in new[] { true, false })
             steps.Add(CheckStep("turbo", enhanced, 980, turboStart, turboPhases));
 
+        // QUIT (top left): one press returns to the menu - in every game
+        foreach (var info in Durell.Games.Catalog.All)
+        {
+            string gid = info.Id;
+            RectangleF quit = default;
+            bool reported = false;
+            steps.Add(new Step($"quit-{gid}", 1.6f, g =>
+            {
+                Play(gid, true, info.PreviewFrames, info.PreviewKeys)(g);
+                reported = false;
+            }, null, (g, t) =>
+            {
+                if (g.CurrentScreen is PlayScreen ps && ps.QuitButton.Width > 0) quit = ps.QuitButton;
+                if (t is > 0.5f and < 0.55f) g.Input.ForcedTaps.Add(new Durell.Input.Tap(quit.Center));
+                if (t > 1.2f && !reported && (reported = true))
+                    KeyCheck.Results.Add(g.CurrentScreen is MenuScreen
+                        ? $"pass {gid} {(g.IsMobile ? "touch" : "keys")}: QUIT returns to the menu"
+                        : $"FAIL {gid} {(g.IsMobile ? "touch" : "keys")}: QUIT did not return to the menu");
+            }));
+        }
+
         steps.Add(new Step("report", 0.1f, _ =>
         {
             File.WriteAllLines(Path.Combine(_outDir, "keycheck.txt"), KeyCheck.Results);
